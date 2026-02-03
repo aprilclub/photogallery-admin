@@ -251,7 +251,7 @@ header {
     background: rgba(255, 255, 255, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.2);
     border-radius: 30px;
-    color: #fff;
+    color: #333;
     font-size: 0.95rem;
     font-weight: 500;
     cursor: pointer;
@@ -261,6 +261,7 @@ header {
 .filter-label:hover {
     background: rgba(255, 255, 255, 0.15);
     transform: translateY(-2px);
+    color: #000;
 }
 
 .filter-checkbox:checked + .filter-label {
