@@ -29,7 +29,7 @@ function checkAuth() {
     
     if (token) {
         // Проверяем токен на сервере
-        fetch('http://localhost:3000/api/auth/verify', {
+        fetch('/api/auth/verify', {
             headers: {
                 'Authorization': `Bearer ${token}`
             }
@@ -89,7 +89,7 @@ loginForm.addEventListener('submit', async (e) => {
     loginError.textContent = '';
     
     try {
-        const response = await fetch('http://localhost:3000/api/auth/login', {
+        const response = await fetch('/api/auth/login', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -123,7 +123,7 @@ logoutBtn.addEventListener('click', () => {
 // Загрузка фото
 async function loadPhotos() {
     try {
-        const response = await fetch('http://localhost:3000/api/photos');
+        const response = await fetch('/api/photos');
         const result = await response.json();
         
         if (result.success) {
@@ -270,7 +270,7 @@ async function deletePhoto(id) {
     
     try {
         const token = localStorage.getItem('adminToken');
-        const response = await fetch(`http://localhost:3000/api/photos/${id}`, {
+        const response = await fetch(`/api/photos/${id}`, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
@@ -370,7 +370,7 @@ uploadForm.addEventListener('submit', async (e) => {
             alert('❌ Ошибка загрузки');
         });
         
-        xhr.open('POST', 'http://localhost:3000/api/photos');
+        xhr.open('POST', '/api/photos');
         xhr.setRequestHeader('Authorization', `Bearer ${token}`);
         xhr.send(formData);
         
