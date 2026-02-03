@@ -188,72 +188,84 @@ app.delete('/api/photos/:id', adminAuth, (req, res) => {
     });
 });
 
-// Эндпоинт для смены пароля администратора (только для первого запуска)
-app.post('/api/admin/change-password', express.json(), (req, res) => {
-    const { username, newPassword } = req.body;
-    
-    if (!username || !newPassword) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Укажите логин и новый пароль' 
-        });
-    }
-    
-    // Хешируем новый пароль
-    const hashedPassword = bcrypt.hashSync(newPassword, 10);
-    
-    // Обновляем пароль в базе данных
-    db.run(
-        'UPDATE admins SET password = ? WHERE username = ?',
-        [hashedPassword, username],
-        function(err) {
-            if (err) {
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Ошибка базы данных: ' + err.message 
-                });
-            }
-            
-            if (this.changes === 0) {
-                return res.status(404).json({ 
-                    success: false, 
-                    message: 'Администратор не найден' 
-                });
-            }
-            
-            res.json({ 
-                success: true, 
-                message: `✅ Пароль для ${username} успешно изменён!` 
-            });
+// ============ Роуты фото ============
+
+// Получить все фото (доступно всем)
+app.get('/api/photos', (req, res) => {
+    db.all(`
+        SELECT * FROM photos
+        ORDER BY created_at DESC
+    `, (err, rows) => {
+        if (err) {
+            return res.status(500).json({ success: false, message: err.message });
         }
-    );
+        res.json({ success: true, photos: rows });
+    });
 });
- 
-    // Вставляем в базу данных
-    db.run(
-        'INSERT INTO admins (username, name, password) VALUES (?, ?, ?)',
-        [username, name, hashedPassword],
-        function(err) {
-            if (err) {
-                if (err.code === 'SQLITE_CONSTRAINT') {
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: 'Администратор с таким логином уже существует' 
-                    });
+
+// Загрузить фото (только администраторы)
+app.post('/api/photos', adminAuth, upload.single('photo'), (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ success: false, message: 'Файл не загружен' });
+        }
+
+        const { caption, category } = req.body;
+        const src = `/uploads/${req.file.filename}`;
+
+        db.run(
+            'INSERT INTO photos (src, caption, category) VALUES (?, ?, ?)',
+            [src, caption, category],
+            function(err) {
+                if (err) {
+                    // Удаляем файл при ошибке
+                    const filePath = path.join(__dirname, '..', src);
+                    if (fs.existsSync(filePath)) {
+                        fs.unlinkSync(filePath);
+                    }
+                    return res.status(500).json({ success: false, message: err.message });
                 }
-                return res.status(500).json({ 
-                    success: false, 
-                    message: 'Ошибка базы данных: ' + err.message 
+                
+                res.json({ 
+                    success: true, 
+                    photo: { 
+                        id: this.lastID, 
+                        src, 
+                        caption, 
+                        category
+                    } 
                 });
             }
-            
-            res.json({ 
-                success: true, 
-                message: `✅ Администратор ${username} создан!`,
-                admin: { id: this.lastID, username, name }
-            });
+        );
+    } catch (error) {
+        res.status(500).json({ success: false, message: error.message });
+    }
+});
+
+// Удалить фото (только администраторы)
+app.delete('/api/photos/:id', adminAuth, (req, res) => {
+    const photoId = req.params.id;
+
+    // Получаем фото
+    db.get('SELECT * FROM photos WHERE id = ?', [photoId], (err, photo) => {
+        if (err || !photo) {
+            return res.status(404).json({ success: false, message: 'Фото не найдено' });
         }
-    );
+
+        // Удаляем файл с сервера
+        const filePath = path.join(__dirname, '..', photo.src);
+        if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+        }
+
+        // Удаляем из базы
+        db.run('DELETE FROM photos WHERE id = ?', [photoId], (err) => {
+            if (err) {
+                return res.status(500).json({ success: false, message: err.message });
+            }
+            res.json({ success: true, message: 'Фото удалено' });
+        });
+    });
 });
 
 // ============ Запуск сервера ============
@@ -266,11 +278,6 @@ app.listen(PORT, () => {
     console.log(`║   🌐 Адрес: http://localhost:${PORT}                      ║`);
     console.log(`║   📂 Загрузки: ${path.join(__dirname, '../uploads')}      ║`);
     console.log(`║   🗄️  База данных: ${path.join(__dirname, '../database.db')}║`);
-    console.log('║                                                            ║');
-    console.log('║   👤 Учётные данные администраторов:                      ║');
-    console.log('║      • admin / admin123                                    ║');
-    console.log('║      • editor1 / editor123                                 ║');
-    console.log('║      • editor2 / editor456                                 ║');
     console.log('║                                                            ║');
     console.log('╚════════════════════════════════════════════════════════════╝');
 });
