@@ -228,21 +228,7 @@ app.post('/api/admin/change-password', express.json(), (req, res) => {
         }
     );
 });
-
-// Эндпоинт для создания нового администратора
-app.post('/api/admin/create-admin', express.json(), (req, res) => {
-    const { username, password, name } = req.body;
-    
-    if (!username || !password || !name) {
-        return res.status(400).json({ 
-            success: false, 
-            message: 'Укажите логин, пароль и имя' 
-        });
-    }
-    
-    // Хешируем пароль
-    const hashedPassword = bcrypt.hashSync(password, 10);
-    
+ 
     // Вставляем в базу данных
     db.run(
         'INSERT INTO admins (username, name, password) VALUES (?, ?, ?)',
