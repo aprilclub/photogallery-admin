@@ -188,6 +188,88 @@ app.delete('/api/photos/:id', adminAuth, (req, res) => {
     });
 });
 
+// Эндпоинт для смены пароля администратора (только для первого запуска)
+app.post('/api/admin/change-password', express.json(), (req, res) => {
+    const { username, newPassword } = req.body;
+    
+    if (!username || !newPassword) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Укажите логин и новый пароль' 
+        });
+    }
+    
+    // Хешируем новый пароль
+    const hashedPassword = bcrypt.hashSync(newPassword, 10);
+    
+    // Обновляем пароль в базе данных
+    db.run(
+        'UPDATE admins SET password = ? WHERE username = ?',
+        [hashedPassword, username],
+        function(err) {
+            if (err) {
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Ошибка базы данных: ' + err.message 
+                });
+            }
+            
+            if (this.changes === 0) {
+                return res.status(404).json({ 
+                    success: false, 
+                    message: 'Администратор не найден' 
+                });
+            }
+            
+            res.json({ 
+                success: true, 
+                message: `✅ Пароль для ${username} успешно изменён!` 
+            });
+        }
+    );
+});
+
+// Эндпоинт для создания нового администратора
+app.post('/api/admin/create-admin', express.json(), (req, res) => {
+    const { username, password, name } = req.body;
+    
+    if (!username || !password || !name) {
+        return res.status(400).json({ 
+            success: false, 
+            message: 'Укажите логин, пароль и имя' 
+        });
+    }
+    
+    // Хешируем пароль
+    const hashedPassword = bcrypt.hashSync(password, 10);
+    
+    // Вставляем в базу данных
+    db.run(
+        'INSERT INTO admins (username, name, password) VALUES (?, ?, ?)',
+        [username, name, hashedPassword],
+        function(err) {
+            if (err) {
+                if (err.code === 'SQLITE_CONSTRAINT') {
+                    return res.status(400).json({ 
+                        success: false, 
+                        message: 'Администратор с таким логином уже существует' 
+                    });
+                }
+                return res.status(500).json({ 
+                    success: false, 
+                    message: 'Ошибка базы данных: ' + err.message 
+                });
+            }
+            
+            res.json({ 
+                success: true, 
+                message: `✅ Администратор ${username} создан!`,
+                admin: { id: this.lastID, username, name }
+            });
+        }
+    );
+});
+
 // ============ Запуск сервера ============
 
 app.listen(PORT, () => {
