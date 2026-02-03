@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📸 Фотогалерея</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Модальное окно входа -->
+    <div class="auth-modal" id="authModal">
+        <div class="auth-content">
+            <h2>🔐 Вход для администратора</h2>
+            <p>Введите логин и пароль для доступа к загрузке фото</p>
+            <form id="loginForm">
+                <input type="text" id="loginUsername" placeholder="Логин" required autocomplete="username">
+                <input type="password" id="loginPassword" placeholder="Пароль" required autocomplete="current-password">
+                <div class="error-message" id="loginError"></div>
+                <button type="submit" class="login-btn">Войти</button>
+                <button type="button" class="guest-btn" onclick="loginAsGuest()">Режим просмотра</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Основной контент -->
+    <div class="container" id="mainContent" style="display: none;">
+        <header>
+            <div class="header-left">
+                <h1>📸 Фотогалерея</h1>
+                <p class="subtitle">Найдите нужные фото по категориям и описанию</p>
+            </div>
+            <div class="header-right">
+                <div class="admin-badge" id="adminBadge" style="display: none;">
+                    👨‍💼 Режим администратора
+                </div>
+                <button class="upload-btn" id="uploadBtn">+ Добавить фото</button>
+                <button class="logout-btn" id="logoutBtn">Выйти</button>
+            </div>
+        </header>
+
+        <!-- Панель управления -->
+        <div class="controls">
+            <div class="search-box">
+                <span class="search-icon">🔍</span>
+                <input type="text" class="search-input" id="searchInput" placeholder="Поиск по описанию...">
+                <button class="search-clear" id="searchClear">×</button>
+            </div>
+
+            <!-- Фильтры -->
+            <div class="filters" id="filters"></div>
+
+            <button class="reset-btn" id="resetBtn" disabled>Сбросить всё</button>
+        </div>
+
+        <!-- Статистика -->
+        <div class="stats" id="stats"></div>
+
+        <!-- Галерея -->
+        <div class="gallery" id="gallery"></div>
+    </div>
+
+    <!-- Модальное окно загрузки -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content upload-content">
+            <span class="close-modal" onclick="closeUploadModal()">&times;</span>
+            <h2>📤 Загрузить фото</h2>
+            <form id="uploadForm">
+                <label class="file-input-label">
+                    <input type="file" id="fileInput" accept="image/*" required>
+                    <span>Выберите файл</span>
+                </label>
+                <input type="text" id="captionInput" placeholder="Описание фото" required>
+                <select id="categoryInput" required>
+                    <option value="">Выберите категорию</option>
+                    <option value="nature">Природа</option>
+                    <option value="city">Город</option>
+                    <option value="portrait">Портреты</option>
+                    <option value="night">Ночь</option>
+                    <option value="architecture">Архитектура</option>
+                    <option value="other">Другое</option>
+                </select>
+                <div class="upload-progress" id="uploadProgress" style="display: none;">
+                    <div class="progress-bar" id="progressBar"></div>
+                </div>
+                <button type="submit" class="submit-btn">Загрузить</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальное окно просмотра -->
+    <div class="modal" id="viewModal">
+        <span class="close-modal" onclick="closeViewModal()">&times;</span>
+        <div class="modal-content" id="modalContent"></div>
+        <div class="modal-caption" id="modalCaption"></div>
+        <button class="delete-btn" id="deleteBtn" style="display: none;">Удалить</button>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
